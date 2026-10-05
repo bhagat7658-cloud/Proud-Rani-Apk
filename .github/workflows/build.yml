@@ -1,0 +1,44 @@
+name: Build Proud Rani APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find and extract project
+        run: |
+          mkdir source
+          ZIP=$(find . -maxdepth 1 -type f -name "*.zip" | head -n 1)
+          echo "Using ZIP: $ZIP"
+          unzip -q "$ZIP" -d source
+          echo "Extracted:"
+          find source -maxdepth 2 -type f | head -50
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Build APK
+        working-directory: source/ProudRaniClean
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProudRani-debug-apk
+          path: source/ProudRaniClean/app/build/outputs/apk/debug/app-debug.apk
